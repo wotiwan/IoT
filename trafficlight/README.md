@@ -1,5 +1,8 @@
 # Traffic Light (Светофор)
 
+## Видео демонстрация работы
+https://vk.com/video317252242_456239500?list=ln-F0TKBtdOrbeZimQMH8
+
 ## Описание схемы
 ![circuit](https://github.com/user-attachments/assets/5b300c6e-c717-4142-9827-ceeaaf8ef8e0)
 1. **Принципиальная схема**
