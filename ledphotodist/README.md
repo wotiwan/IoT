@@ -1,5 +1,8 @@
 # Led Photo Distributed Serial (Распределённые системы)
 
+## Видео демонстрация работы
+https://vk.com/video317252242_456239498?list=ln-MCTuaJo5bStvjCm3Mk
+
 ## Описание схемы
 ### Подключение светодиода
 ![circuit](https://github.com/user-attachments/assets/b46294b6-32e8-4cef-9ea1-4615f39f3da7)
