@@ -1,5 +1,8 @@
 # Light detector (Детектор источника света)
 
+## Видео демонстрация работы
+https://vk.com/video317252242_456239499?list=ln-jM2JSzWZ8Bg2QQhBWp
+
 ## Описание схемы
 ### Подключение светодиодов
 ![circuit (1)](https://github.com/user-attachments/assets/9559d103-df59-4ca5-b660-6ca4c773d046)
