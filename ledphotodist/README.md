@@ -1,7 +1,13 @@
 # Led Photo Distributed Serial (Распределённые системы)
 
 ## Видео демонстрация работы
+### Ссылка на цепь собранную без пайки
 https://vk.com/video317252242_456239498?list=ln-MCTuaJo5bStvjCm3Mk
+
+
+### Ссылка на цепь собранную с пайкой
+https://drive.google.com/file/d/1oUkoKK1CnhtDk8xzZDmEM8Cbs-jSp9ea/view?usp=drivesdk
+
 
 ## Описание схемы
 ### Подключение светодиода
