@@ -1,7 +1,7 @@
 # Led Matrix 8x8_registers
 
 ## Видео демонстрация работы
-https://drive.google.com/file/d/1JEdp757znor0Lia08CftnYzgzri6TJpF/view?usp=sharing
+https://drive.google.com/file/d/1VOOmveUc5-a5bwrmpGtTGpBNoapX6l5-/view?usp=sharing
 
 ## Описание схемы
 ### Подключение светодиодной матрицы
