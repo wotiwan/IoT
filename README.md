@@ -8,3 +8,7 @@
   ### 3. [Распределённые системы](./ledphotodist)
 
   ### 4. [MQTT](./mqtt)
+
+  ### 5. [LedMatrix8x8](./LedMatrix8x8)
+
+  ### 6. [LedMatrix8x8_registers](./LedMatrix8x8_registers)
