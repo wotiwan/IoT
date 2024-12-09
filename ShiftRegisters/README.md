@@ -1,6 +1,7 @@
 # ShiftRegisters
 
 ## Видео демонстрация работы
+https://drive.google.com/file/d/1Tl6Kir0T8RghbPz2A4XQCTR5hyXz475a/view?usp=sharing
 
 ## Описание схемы
 ### Подключение светодиодов и регистра 74HC595
