@@ -12,3 +12,7 @@
   ### 5. [LedMatrix8x8](./LedMatrix8x8)
 
   ### 6. [LedMatrix8x8_registers](./LedMatrix8x8_registers)
+
+  ### 7. [ShiftRegisters](./ShiftRegisters)
+
+  ### 8. [LedMatrix](./LedMatrix)
