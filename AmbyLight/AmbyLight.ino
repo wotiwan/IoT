@@ -1,27 +1,36 @@
 #include <FastLED.h>
 
 #define LED_PIN 8
-#define LED_COUNT 5
+#define LED_COUNT 228
 
-CRGB leds[LED_COUNT]; // Объявление массива светодиодов 
+CRGB leds[LED_COUNT]; // Объявление массива светодиодов
 
-int mode = 0; // Изначальный режим не должен ждать никаких значений.
+int mode = 3; // Изначальный режим не должен ждать никаких значений.
 
-int brightness = 100; // Яркость, задаётся пользователем, по умолчанию максимальная
+int saturation = 255; // Насыщенность HSV цвета, задаётся пользователем ?? Если колорпикер будет хсвшным, что вряд ли
+int brightness = 255; // Яркость, задаётся пользователем, по умолчанию (!максимальная)
 int effects_speed = 10; // Скорость световых эффектов, шкала от 1 до 10, задаётся пользователем
 
-int global_hsv = 0; // мб заменить на флоат? если хсв не целочисленный
+int global_hsv = 0;
 int hsv_states[LED_COUNT] = {0};
 bool rainbow_set = false;
 bool gradient_set = false;
+bool star_set = false;
+int ambilight_iteration = 1;
+
+int star_position = 73; // стартовая позиция
 
 void off_the_lights();
-void ambilight();
+void ambilight(int iteration);
 void static_lights();
 void set_rainbow();
 void rainbow();
 void set_gradient();
 void gradient();
+void set_star();
+void star_shooting();
+
+void change_brightness(int old_mode);
 
 void custom_delay();
 
@@ -32,7 +41,15 @@ void setup() {
 
 void loop() {
   if (Serial.available() > 0) {
-    mode = Serial.read();
+
+    int new_mode = Serial.read();
+    
+    if (new_mode == 99) { // Режим менять не надо
+      change_brightness();
+    } else {
+      mode = new_mode;
+    }
+
     Serial.println(mode);
     if (mode != 3) {
       rainbow_set = false;
@@ -42,6 +59,8 @@ void loop() {
       gradient_set = false;
       global_hsv = 0; // потом поломается это, надо по хорошему разные переменные хсв для градиента и радуги
     }
+
+    star_set = false;
   }
 
   if (mode == 0) { // может вызвать проблемы | выключение подсветки
@@ -49,19 +68,26 @@ void loop() {
   }
 
   if (mode == 1) { // Адаптивная эмбиент подсветка
-    ambilight();
+    ambilight_iteration = 1; // Всего 11 + 1 = 12 пакетов
+    // while(Serial.available()) { Serial.read(); }
+    ambilight(ambilight_iteration);
   }
 
   if (mode == 2) { // Режим статичного цвета
     static_lights();
-  } 
-  
-  if (mode == 3) { 
+  }
+
+  if (mode == 3) {
     rainbow();
   }
 
   if (mode == 4) {
     gradient();
+  }
+
+  if (mode == 5) {
+    star_shooting();
+
   }
 }
 
@@ -70,10 +96,11 @@ void off_the_lights() {
     leds[i] = 0;
   }
   FastLED.show();
-  Serial.println("OK");
+  Serial.println("OK_off");
 }
 
 void static_lights() {
+  Serial.println("start_static"); // поменять вообще чтобы глобальная переменная цвета была
   while(Serial.available() < 3) {
     // Ждем весь пакет опять же
   }
@@ -82,20 +109,36 @@ void static_lights() {
   leds[0].g = Serial.read();  // Читаем G
   leds[0].r = Serial.read();  // Читаем B
   for (int i = 1; i < LED_COUNT; i++) {
-    leds[i].b = leds[0].b; // Копируем полученный цвет во все диоды  
+    leds[i].b = leds[0].b; // Копируем полученный цвет во все диоды
     leds[i].g = leds[0].g;
     leds[i].r = leds[0].r;
   }
   FastLED.show();
-  Serial.println("OK");
+  Serial.println("OK_static");
 }
 
-void ambilight() {
-  while(Serial.available() < LED_COUNT * 3) {
-    // просто ждём пока придут все данные
-  } 
-  Serial.read(); // От куда то берётся 1 байт мусора 
-  for (int i = 0; i < LED_COUNT; i++) {
+void ambilight(int iteration) {
+  
+  int bite_quantity = 60;
+  int start_position = (iteration - 1) * bite_quantity / 3; 
+
+
+  if (iteration == 1) {
+    Serial.println("start");
+  }
+
+  if (iteration != 12) {
+    while(Serial.available() < 60) {} // ждём пока придёт 60 байт, но приходит только 2
+  } else {
+    bite_quantity = 24;
+    while(Serial.available() < 24) {}
+  }
+
+  if (iteration == 1) {
+    Serial.read();
+  }
+
+  for (int i = start_position; i < start_position + bite_quantity / 3; i++) {
     leds[i].b = Serial.read();  // Читаем R
     leds[i].g = Serial.read();  // Читаем G
     leds[i].r = Serial.read();  // Читаем B
@@ -105,13 +148,16 @@ void ambilight() {
       leds[i].b = 0;
     }
   }
-  FastLED.show();
 
-  while(Serial.available()) {
-    Serial.read();
+  while(Serial.available()) { Serial.read(); }
+
+  if (iteration != 12) {
+    Serial.println("next");
+    ambilight(iteration + 1);
+  } else {
+    FastLED.show();
+    Serial.println("OK_ambi");
   }
-
-  Serial.println("OK"); // питон ждёт пока мы закончим прежде чем отправить новый пакет
 }
 
 void set_rainbow() { // Радуга // Проверено на питоне, цвета идеально правильно вычисляются, кольцо идеальное
@@ -121,16 +167,16 @@ void set_rainbow() { // Радуга // Проверено на питоне, ц
     if (global_hsv >= 255) { // Если дошли до предела - перешли на следующий круг
       global_hsv = global_hsv % 255;
     }
-    leds[i].setHSV(global_hsv, 255, brightness); 
+    leds[i].setHSV(global_hsv, 255, brightness);
     hsv_states[i] = global_hsv;
 
     // Для тестов, на полной ленте раскомментировать
-    global_hsv += 35; // А это удалить
-    // if (i % 4 == 0) { 
-    //   global_hsv += 3;
-    // } else {
-    //   global_hsv += 2;
-    // }
+    // global_hsv += 35; // А это удалить
+    if (i % 4 == 0) {
+      global_hsv += 3;
+    } else {
+      global_hsv += 2;
+    }
   }
   FastLED.show();
   rainbow_set = true;
@@ -177,10 +223,39 @@ void gradient() { // Градиент не управляемый по идее
   custom_delay();
 }
 
+void set_star() {
+  while(Serial.available() < 3) {
+    // Ждем пакет
+  }
+  leds[star_position].r = Serial.read();
+  leds[star_position].g = Serial.read();
+  leds[star_position].b = Serial.read();
+  star_set = true;
+}
+
+void star_shooting() {
+
+  if (!star_set) {
+    set_star();
+  }
+
+  int star_brightness = brightness;
+  for (int i = star_position; i > 72; i-- ) {
+    
+    int brightness_ratio = star_position - i * 10; // степень затухания
+
+    leds[i].r = max(leds[star_position].r - brightness_ratio, 0);
+    leds[i].g = max(leds[star_position].g - brightness_ratio, 0);
+    leds[i].b = max(leds[star_position].b - brightness_ratio, 0);
+  }
+  star_position = min(star_position+1, 214); // Она будет упираться в низ экрана и исчезать, а не уезжать за него.
+  FastLED.show();
+}
+
 void custom_delay() {
   long int start_time = millis();
   long int cur_time = millis();
-  int delay_ratio = 11 - effects_speed; // 
+  int delay_ratio = 11 - effects_speed; //
   int delay = 15 * delay_ratio;
   while (true) {
     if (cur_time - delay >= start_time) {
@@ -188,4 +263,15 @@ void custom_delay() {
     }
     cur_time = millis();
   }
+}
+
+void change_brightness() {
+  while (Serial.available() < 1) {
+    // Ожидаем пакет
+  }
+  brightness = Serial.read();
+  while(Serial.available()) {
+    Serial.read();
+  }
+  Serial.println("OK_brightness");
 }
