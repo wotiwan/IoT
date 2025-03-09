@@ -11,7 +11,7 @@ int saturation = 255; // Насыщенность HSV цвета, задаётс
 int brightness = 85; // Яркость, задаётся пользователем, по умолчанию (!максимальная)
 int effects_speed = 10; // Скорость световых эффектов, шкала от 1 до 10, задаётся пользователем
 
-int global_rgb[3] = {255};
+int global_rgb[3] = {255, 0, 0};
 int global_hsv = 0;
 int hsv_states[LED_COUNT] = {0};
 bool rainbow_set = false;
@@ -91,7 +91,6 @@ void loop() {
 
   if (mode == 5) {
     star_shooting();
-
   }
 }
 
@@ -202,12 +201,14 @@ void gradient() {
 }
 
 void set_star() {
-  while(Serial.available() < 3) {
-    // Ждем пакет
-  }
-  leds[star_position].r = Serial.read();
-  leds[star_position].g = Serial.read();
-  leds[star_position].b = Serial.read();
+
+  off_the_lights();
+
+  leds[star_position].r = global_rgb[0];
+  leds[star_position].g = global_rgb[1];
+  leds[star_position].b = global_rgb[2];
+  FastLED.show();
+  custom_delay();
   star_set = true;
 }
 
@@ -220,20 +221,30 @@ void star_shooting() {
   int star_brightness = brightness;
   for (int i = star_position; i > 72; i-- ) {
     
-    int brightness_ratio = star_position - i * 10; // степень затухания
-
-    leds[i].r = max(leds[star_position].r - brightness_ratio, 0);
-    leds[i].g = max(leds[star_position].g - brightness_ratio, 0);
-    leds[i].b = max(leds[star_position].b - brightness_ratio, 0);
+    int brightness_ratio = (star_position - i) * 20; // степень затухания
+    if (i > 113) { // Если ушли за край экрана (стороны)
+      leds[i] = 0;
+    } 
+    else {
+      leds[i].r = max(global_rgb[0] - brightness_ratio, 0);
+      leds[i].g = max(global_rgb[1] - brightness_ratio, 0);
+      leds[i].b = max(global_rgb[2] - brightness_ratio, 0);
+    }
   }
-  star_position = min(star_position+1, 214); // Она будет упираться в низ экрана и исчезать, а не уезжать за него.
+  
+  star_position = min(star_position+1, 127);
+  if (star_position == 127) {
+    star_set = false;
+    star_position = 73;
+  }
   FastLED.show();
+  custom_delay();
 }
 
 void custom_delay() { 
   long int start_time = millis();
   long int cur_time = millis();
-  int delay_ratio = 11 - effects_speed; //
+  int delay_ratio = 11 - effects_speed;
   int delay = 15 * delay_ratio;
   while (true) {
     if (cur_time - delay >= start_time) {
