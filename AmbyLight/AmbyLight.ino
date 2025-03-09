@@ -18,12 +18,11 @@ int hsv_states[LED_COUNT] = {0};
 bool rainbow_set = false;
 bool gradient_set = false;
 bool star_set = false;
-int ambilight_iteration = 1;
 
 int star_position = 73; // стартовая позиция
 
 void off_the_lights();
-void ambilight(int iteration);
+void ambilight();
 void static_lights();
 void set_rainbow();
 void rainbow();
@@ -32,7 +31,7 @@ void gradient();
 void set_star();
 void star_shooting();
 
-void change_brightness(int old_mode);
+void change_brightness();
 void change_rgb_color();
 
 void custom_delay();
@@ -48,7 +47,6 @@ void loop() {
 
     int new_mode = Serial.read();
     
-
     // Смена цвета, яркости, насыщенности не влечёт за собой смену режима
     if (new_mode == 99) { // Меняем яркость
       change_brightness();
@@ -59,8 +57,6 @@ void loop() {
     else {
       mode = new_mode;
     }
-
-
 
     if (mode != 3) {
       rainbow_set = false;
@@ -81,8 +77,7 @@ void loop() {
   }
 
   if (mode == 1) { // Адаптивная эмбиент подсветка
-    ambilight_iteration = 1; // Всего 11 + 1 = 12 пакетов
-    ambilight(ambilight_iteration);
+    ambilight());
   }
 
   if (mode == 2) { // Режим статичного цвета
@@ -120,25 +115,16 @@ void static_lights() {
   FastLED.show();
 }
 
-void ambilight(int iteration) {
-  
-  // int bite_quantity = 60;
-  // int start_position = (iteration - 1) * bite_quantity / 3; 
+void ambilight() {
 
+  Serial.println("start");
 
-  if (iteration == 1) {
-    Serial.println("start");
-  }
+  // ждём пока придёт 684 байта 
+  while(Serial.available() < 684) { // Exception(4) + soft reload если данные долго не приходят
+    delay(1); // Чтобы не улетать в reload, поменять потом на кастом
+  } 
 
-  if (iteration != 12) {
-    // ждём пока придёт 684 байта 
-    while(Serial.available() < 684) { // Exception(4) + soft reload если данные долго не приходят
-      delay(1); // Чтобы не улетать в reload, поменять потом на кастом
-    } 
-  }
-  if (iteration == 1) {
-    Serial.read();
-  }
+  Serial.read(); // Байт мусора
 
   for (int i = 0; i < LED_COUNT; i++) {
     leds[i].r = Serial.read();  // Читаем R
@@ -155,13 +141,8 @@ void ambilight(int iteration) {
     Serial.read();
   }
 
-  if (iteration != 1) {
-    Serial.println("next");
-    ambilight(iteration + 1);
-  } else {
-    FastLED.show();
-    Serial.println("OK_ambi");
-  }
+  FastLED.show();
+  Serial.println("OK_ambi");
 }
 
 void set_rainbow() { // Радуга // Проверено на питоне, цвета идеально правильно вычисляются, кольцо идеальное
