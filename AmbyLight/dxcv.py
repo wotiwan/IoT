@@ -7,7 +7,7 @@ import serial
 ser = serial.Serial('COM7', 1000000)
 time.sleep(2)
 
-# Аппаратное ускорения для увеличения быстродействия
+# Аппаратное ускорение для увеличения быстродействия
 cv2.setUseOptimized(True)
 cv2.setNumThreads(8)
 cv2.ocl.setUseOpenCL(True)
