@@ -12,6 +12,7 @@ int saturation = 255; // Насыщенность HSV цвета, задаётс
 int brightness = 85; // Яркость, задаётся пользователем, по умолчанию (!максимальная)
 int effects_speed = 10; // Скорость световых эффектов, шкала от 1 до 10, задаётся пользователем
 
+int global_rgb[3] = {255};
 int global_hsv = 0;
 int hsv_states[LED_COUNT] = {0};
 bool rainbow_set = false;
@@ -32,6 +33,7 @@ void set_star();
 void star_shooting();
 
 void change_brightness(int old_mode);
+void change_rgb_color();
 
 void custom_delay();
 
@@ -46,13 +48,20 @@ void loop() {
 
     int new_mode = Serial.read();
     
-    if (new_mode == 99) { // Режим менять не надо
+
+    // Смена цвета, яркости, насыщенности не влечёт за собой смену режима
+    if (new_mode == 99) { // Меняем яркость
       change_brightness();
-    } else {
+    } 
+    else if (new_mode == 98) { // Меняем цвет
+      change_rgb_color();
+    }
+    else {
       mode = new_mode;
     }
 
-    // Serial.println(mode);
+
+
     if (mode != 3) {
       rainbow_set = false;
       global_hsv = 0;
@@ -64,6 +73,8 @@ void loop() {
 
     star_set = false;
   }
+
+  Serial.println(mode);
 
   if (mode == 0) { // может вызвать проблемы | выключение подсветки
     off_the_lights();
@@ -101,21 +112,12 @@ void off_the_lights() {
 }
 
 void static_lights() {
-  Serial.println("start_static"); // поменять вообще чтобы глобальная переменная цвета была
-  while(Serial.available() < 3) {
-    // Ждем весь пакет опять же
-  }
-
-  leds[0].r = Serial.read();  // Читаем R
-  leds[0].g = Serial.read();  // Читаем G
-  leds[0].b = Serial.read();  // Читаем B
-  for (int i = 1; i < LED_COUNT; i++) {
-    leds[i].b = leds[0].b; // Копируем полученный цвет во все диоды
-    leds[i].g = leds[0].g;
-    leds[i].r = leds[0].r;
+  for (int i = 0; i < LED_COUNT; i++) {
+    leds[i].r = global_rgb[0]; // Копируем полученный цвет во все диоды
+    leds[i].g = global_rgb[1];
+    leds[i].b = global_rgb[2];
   }
   FastLED.show();
-  Serial.println("OK_static");
 }
 
 void ambilight(int iteration) {
@@ -276,4 +278,18 @@ void change_brightness() {
     Serial.read();
   }
   Serial.println("OK_brightness");
+}
+
+void change_rgb_color() {
+  Serial.println("start_rgb");
+  while (Serial.available() < 3) {
+    delay(1); // Ожидаем пакет // Сменить на кастом
+  }
+  global_rgb[0] = Serial.read();
+  global_rgb[1] = Serial.read();
+  global_rgb[2] = Serial.read();
+  while(Serial.available()) {
+    Serial.read();
+  }
+  Serial.println("OK_rgb");
 }
