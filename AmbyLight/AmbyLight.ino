@@ -129,7 +129,10 @@ void ambilight(int iteration) {
   }
 
   if (iteration != 12) {
-    while(Serial.available() < 684) {} // ждём пока придёт 684 байта
+    // ждём пока придёт 684 байта 
+    while(Serial.available() < 684) { // Exception(4) + soft reload если данные долго не приходят
+      delay(1); // Чтобы не улетать в reload, поменять потом на кастом
+    } 
   }
   if (iteration == 1) {
     Serial.read();
