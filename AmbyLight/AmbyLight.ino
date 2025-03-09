@@ -1,6 +1,7 @@
 #include <FastLED.h>
 
-#define LED_PIN 8
+// #define LED_PIN 8
+#define LED_PIN D1
 #define LED_COUNT 228
 
 CRGB leds[LED_COUNT]; // Объявление массива светодиодов
@@ -8,7 +9,7 @@ CRGB leds[LED_COUNT]; // Объявление массива светодиод�
 int mode = 3; // Изначальный режим не должен ждать никаких значений.
 
 int saturation = 255; // Насыщенность HSV цвета, задаётся пользователем ?? Если колорпикер будет хсвшным, что вряд ли
-int brightness = 255; // Яркость, задаётся пользователем, по умолчанию (!максимальная)
+int brightness = 85; // Яркость, задаётся пользователем, по умолчанию (!максимальная)
 int effects_speed = 10; // Скорость световых эффектов, шкала от 1 до 10, задаётся пользователем
 
 int global_hsv = 0;
@@ -35,7 +36,8 @@ void change_brightness(int old_mode);
 void custom_delay();
 
 void setup() {
-  Serial.begin(250000);
+  Serial.begin(921600);
+  Serial.setRxBufferSize(1024);
   FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, LED_COUNT);
 }
 
@@ -50,7 +52,7 @@ void loop() {
       mode = new_mode;
     }
 
-    Serial.println(mode);
+    // Serial.println(mode);
     if (mode != 3) {
       rainbow_set = false;
       global_hsv = 0;
@@ -69,7 +71,6 @@ void loop() {
 
   if (mode == 1) { // Адаптивная эмбиент подсветка
     ambilight_iteration = 1; // Всего 11 + 1 = 12 пакетов
-    // while(Serial.available()) { Serial.read(); }
     ambilight(ambilight_iteration);
   }
 
@@ -105,9 +106,9 @@ void static_lights() {
     // Ждем весь пакет опять же
   }
 
-  leds[0].b = Serial.read();  // Читаем R
+  leds[0].r = Serial.read();  // Читаем R
   leds[0].g = Serial.read();  // Читаем G
-  leds[0].r = Serial.read();  // Читаем B
+  leds[0].b = Serial.read();  // Читаем B
   for (int i = 1; i < LED_COUNT; i++) {
     leds[i].b = leds[0].b; // Копируем полученный цвет во все диоды
     leds[i].g = leds[0].g;
@@ -119,8 +120,8 @@ void static_lights() {
 
 void ambilight(int iteration) {
   
-  int bite_quantity = 60;
-  int start_position = (iteration - 1) * bite_quantity / 3; 
+  // int bite_quantity = 60;
+  // int start_position = (iteration - 1) * bite_quantity / 3; 
 
 
   if (iteration == 1) {
@@ -128,20 +129,16 @@ void ambilight(int iteration) {
   }
 
   if (iteration != 12) {
-    while(Serial.available() < 60) {} // ждём пока придёт 60 байт, но приходит только 2
-  } else {
-    bite_quantity = 24;
-    while(Serial.available() < 24) {}
+    while(Serial.available() < 684) {} // ждём пока придёт 684 байта
   }
-
   if (iteration == 1) {
     Serial.read();
   }
 
-  for (int i = start_position; i < start_position + bite_quantity / 3; i++) {
-    leds[i].b = Serial.read();  // Читаем R
+  for (int i = 0; i < LED_COUNT; i++) {
+    leds[i].r = Serial.read();  // Читаем R
     leds[i].g = Serial.read();  // Читаем G
-    leds[i].r = Serial.read();  // Читаем B
+    leds[i].b = Serial.read();  // Читаем B
     if (leds[i].r <= 20 && leds[i].g <= 20 && leds[i].b <= 20) { // Небольшой трешхолд для серых цветов
       leds[i].r = 0;
       leds[i].g = 0;
@@ -149,9 +146,11 @@ void ambilight(int iteration) {
     }
   }
 
-  while(Serial.available()) { Serial.read(); }
+  while(Serial.available()) { 
+    Serial.read();
+  }
 
-  if (iteration != 12) {
+  if (iteration != 1) {
     Serial.println("next");
     ambilight(iteration + 1);
   } else {
@@ -252,7 +251,7 @@ void star_shooting() {
   FastLED.show();
 }
 
-void custom_delay() {
+void custom_delay() { 
   long int start_time = millis();
   long int cur_time = millis();
   int delay_ratio = 11 - effects_speed; //
