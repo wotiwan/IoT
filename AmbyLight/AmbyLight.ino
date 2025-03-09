@@ -1,6 +1,5 @@
 #include <FastLED.h>
 
-// #define LED_PIN 8
 #define LED_PIN D1
 #define LED_COUNT 228
 
@@ -70,14 +69,12 @@ void loop() {
     star_set = false;
   }
 
-  Serial.println(mode);
-
   if (mode == 0) { // может вызвать проблемы | выключение подсветки
     off_the_lights();
   }
 
   if (mode == 1) { // Адаптивная эмбиент подсветка
-    ambilight());
+    ambilight();
   }
 
   if (mode == 2) { // Режим статичного цвета
@@ -145,9 +142,7 @@ void ambilight() {
   Serial.println("OK_ambi");
 }
 
-void set_rainbow() { // Радуга // Проверено на питоне, цвета идеально правильно вычисляются, кольцо идеальное
-  // Проходим по хсв 0..255 два раза за 228 диодов. 510 цветов, шаг между диодами 2 цвета. + каждый 4 диод шаг 3
-  // 54 диода с шагом 3 = 162 цвета, 174 диода с шагом 2 = 348 цветов, итого 510 цветов
+void set_rainbow() {
   for (int i = 0; i < LED_COUNT; i++) { // установка стартового состояния
     if (global_hsv >= 255) { // Если дошли до предела - перешли на следующий круг
       global_hsv = global_hsv % 255;
@@ -155,9 +150,7 @@ void set_rainbow() { // Радуга // Проверено на питоне, ц
     leds[i].setHSV(global_hsv, 255, brightness);
     hsv_states[i] = global_hsv;
 
-    // Для тестов, на полной ленте раскомментировать
-    // global_hsv += 35; // А это удалить
-    if (i % 4 == 0) {
+    if (i % 4 == 0) { // Для равномерного распределния цветов на 228 светодиодов
       global_hsv += 3;
     } else {
       global_hsv += 2;
@@ -176,7 +169,7 @@ void rainbow() {
   for (int i = 0; i < LED_COUNT; i++) {
     int new_color = (hsv_states[i] + 1) % 256;
     hsv_states[i] = new_color;
-    leds[i].setHSV(new_color, 255, brightness); // меняем оттенок на 1 (получится змейка же D: )
+    leds[i].setHSV(new_color, 255, brightness);
   }
   FastLED.show();
   custom_delay();
@@ -190,9 +183,9 @@ void set_gradient() {
   gradient_set = true;
 }
 
-void gradient() { // Градиент не управляемый по идее
+void gradient() {
 
-  if (!gradient_set) { // Проверка стартового состояния
+  if (!gradient_set) {
     set_gradient();
     FastLED.show();
     return;
