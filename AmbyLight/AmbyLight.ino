@@ -7,6 +7,7 @@ CRGB leds[LED_COUNT]; // Объявление массива светодиод�
 
 int mode = 3; // Изначальный режим не должен ждать никаких значений.
 
+float color_ratio = 0.2; 
 float smooth_ratio = 0.3; // Переменная для сглаживания картинки ambient режима
 int saturation = 255; // Насыщенность HSV цвета, задаётся пользователем ?? Если колорпикер будет хсвшным, что вряд ли
 int brightness = 85; // Яркость, задаётся пользователем, по умолчанию (!максимальная)
@@ -35,6 +36,8 @@ void change_brightness();
 void change_rgb_color();
 
 void custom_delay();
+
+int find_max(int a, int b, int c);
 
 void setup() {
   Serial.begin(921600);
@@ -124,10 +127,21 @@ void ambilight() {
   Serial.read(); // Байт мусора
 
   for (int i = 0; i < LED_COUNT; i++) { 
+
+    int new_r = Serial.read(); //
+    int new_g = Serial.read(); //
+    int new_b = Serial.read(); //
+
+
+    float color_ratio = (255 - find_max(new_r, new_g, new_b)) / 255; // Увеличение яркости тусклых пикселей
+    new_r = new_r * (color_ratio * 0.7 + 1); // color_ratio можно допом домножить на коэф. до 1, если слишком ярко
+    new_g = new_g * (color_ratio * 0.7 + 1);
+    new_b = new_b * (color_ratio * 0.7 + 1);
+
     // Устраняем мерцание сглаживанием
-    leds[i].r = leds[i].r * (1 - smooth_ratio) + Serial.read() * smooth_ratio;  // Читаем R
-    leds[i].g = leds[i].g * (1 - smooth_ratio) + Serial.read() * smooth_ratio;  // Читаем G
-    leds[i].b = leds[i].b * (1 - smooth_ratio) + Serial.read() * smooth_ratio;  // Читаем B
+    leds[i].r = leds[i].r * (1 - smooth_ratio) + new_r * smooth_ratio;  // Читаем R
+    leds[i].g = leds[i].g * (1 - smooth_ratio) + new_g * smooth_ratio;  // Читаем G
+    leds[i].b = leds[i].b * (1 - smooth_ratio) + new_b * smooth_ratio;  // Читаем B
     if (leds[i].r <= 20 && leds[i].g <= 20 && leds[i].b <= 20) { // Небольшой трешхолд для серых цветов
       leds[i].r /= 5; // Деление для плавного затухания
       leds[i].g /= 5;
@@ -279,4 +293,16 @@ void change_rgb_color() {
     Serial.read();
   }
   Serial.println("OK_rgb");
+}
+
+int find_max(int a, int b, int c) {
+  if (a > b && a > c) {
+    return a;
+  }
+  else if (b > a && b > c) {
+    return b;
+  }
+  else {
+    return c;
+  }
 }
