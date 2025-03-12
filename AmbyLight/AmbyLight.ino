@@ -127,16 +127,29 @@ void ambilight() {
   Serial.read(); // Байт мусора
 
   for (int i = 0; i < LED_COUNT; i++) { 
+    
+    float color_ratio;
 
     int new_r = Serial.read(); //
     int new_g = Serial.read(); //
     int new_b = Serial.read(); //
 
+    int brightest_color = find_max(new_r, new_g, new_b);
 
-    float color_ratio = (255 - find_max(new_r, new_g, new_b)) / 255; // Увеличение яркости тусклых пикселей
-    new_r = new_r * (color_ratio * 0.7 + 1); // color_ratio можно допом домножить на коэф. до 1, если слишком ярко
-    new_g = new_g * (color_ratio * 0.7 + 1);
-    new_b = new_b * (color_ratio * 0.7 + 1);
+    // Если тусклый цвет, то вычитаем белый компонент, затем увеличиваем яркость с большим коэфф.
+    if (brightest_color < 100) { // Другими словами увеличиваем насыщенность
+      new_r = max(new_r - 20, 0); 
+      new_g = max(new_g - 20, 0);
+      new_b = max(new_b - 20, 0);
+      color_ratio = (255 - brightest_color) / 255 * 1.3;
+    }
+    else {
+      color_ratio = (255 - brightest_color) / 255; // Увеличение яркости тусклых пикселей
+    }
+
+    new_r = new_r * (color_ratio * 1 + 1); // color_ratio можно допом домножить на коэф. до 1, если слишком ярко
+    new_g = new_g * (color_ratio * 1 + 1);
+    new_b = new_b * (color_ratio * 1 + 1);
 
     // Устраняем мерцание сглаживанием
     leds[i].r = leds[i].r * (1 - smooth_ratio) + new_r * smooth_ratio;  // Читаем R
