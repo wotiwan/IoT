@@ -136,12 +136,14 @@ void ambilight() {
 
     int brightest_color = find_max(new_r, new_g, new_b);
 
+    // float brightness_ratio = 100 - brightest_color / 30;
+
     // Если тусклый цвет, то вычитаем белый компонент, затем увеличиваем яркость с большим коэфф.
     if (brightest_color < 100) { // Другими словами увеличиваем насыщенность
       new_r = max(new_r - 20, 0); 
       new_g = max(new_g - 20, 0);
       new_b = max(new_b - 20, 0);
-      color_ratio = (255 - brightest_color) / 255 * 1.3;
+      color_ratio = (255 - brightest_color - 20) / 255 * 2.0;
     }
     else {
       color_ratio = (255 - brightest_color) / 255; // Увеличение яркости тусклых пикселей
