@@ -127,41 +127,43 @@ void ambilight() {
   Serial.read(); // Байт мусора
 
   for (int i = 0; i < LED_COUNT; i++) { 
-    
-    float color_ratio;
 
     int new_r = Serial.read(); //
     int new_g = Serial.read(); //
     int new_b = Serial.read(); //
-
-    int brightest_color = find_max(new_r, new_g, new_b);
-
     // float brightness_ratio = 100 - brightest_color / 30;
 
-    // Если тусклый цвет, то вычитаем белый компонент, затем увеличиваем яркость с большим коэфф.
-    if (brightest_color < 100) { // Другими словами увеличиваем насыщенность
-      new_r = max(new_r - 20, 0); 
-      new_g = max(new_g - 20, 0);
-      new_b = max(new_b - 20, 0);
-      color_ratio = (255 - brightest_color - 20) / 255 * 2.0;
+    if (new_r <= 20 && new_g <= 20 && new_b <= 20) { // Небольшой трешхолд для тусклых серых цветов
+      new_r = 0;
+      new_g = 0;
+      new_b = 0;
     }
     else {
-      color_ratio = (255 - brightest_color) / 255; // Увеличение яркости тусклых пикселей
-    }
 
-    new_r = new_r * (color_ratio * 1 + 1); // color_ratio можно допом домножить на коэф. до 1, если слишком ярко
-    new_g = new_g * (color_ratio * 1 + 1);
-    new_b = new_b * (color_ratio * 1 + 1);
+      float color_ratio;
+
+      int brightest_color = find_max(new_r, new_g, new_b);
+      // Если тусклый цвет, то вычитаем белый компонент, затем увеличиваем яркость с большим коэфф.
+      if (brightest_color < 100) { // Другими словами увеличиваем насыщенность цвета
+        new_r = max(new_r - 20, 0); 
+        new_g = max(new_g - 20, 0);
+        new_b = max(new_b - 20, 0);
+        color_ratio = (255 - brightest_color - 20) / 255 * 2.0; // Коэф. также подстраивается
+      }
+      else {
+        color_ratio = (255 - brightest_color) / 255; // Увеличение яркости тусклых пикселей
+      }
+
+      new_r = new_r * (color_ratio * 1 + 1); // color_ratio можно допом домножить на коэф. до 1, если слишком ярко
+      new_g = new_g * (color_ratio * 1 + 1);
+      new_b = new_b * (color_ratio * 1 + 1);
+    }
 
     // Устраняем мерцание сглаживанием
     leds[i].r = leds[i].r * (1 - smooth_ratio) + new_r * smooth_ratio;  // Читаем R
     leds[i].g = leds[i].g * (1 - smooth_ratio) + new_g * smooth_ratio;  // Читаем G
     leds[i].b = leds[i].b * (1 - smooth_ratio) + new_b * smooth_ratio;  // Читаем B
-    if (leds[i].r <= 20 && leds[i].g <= 20 && leds[i].b <= 20) { // Небольшой трешхолд для серых цветов
-      leds[i].r /= 5; // Деление для плавного затухания
-      leds[i].g /= 5;
-      leds[i].b /= 5;
-    }
+
   }
 
   while(Serial.available()) { 
