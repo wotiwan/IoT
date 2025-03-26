@@ -74,7 +74,6 @@ void loop() {
       gradient_set = false;
       global_hsv = 0; // потом поломается это, надо по хорошему разные переменные хсв для градиента и радуги
     }
-
     star_set = false;
 
     if (mode == 1) { // Адаптивная эмбиент подсветка
@@ -126,8 +125,6 @@ void ambilight() {
   while(Serial.available() < 684) { // Exception(4) + soft reload если данные долго не приходят
     delay(1); // Чтобы не улетать в reload, поменять потом на кастом
   } 
-
-  Serial.read(); // Байт мусора
 
   for (int i = 0; i < LED_COUNT; i++) { 
 
