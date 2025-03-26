@@ -144,17 +144,17 @@ void ambilight() {
     }
     else {
 
-      float color_ratio;
+      float color_ratio = 0;
 
       int brightest_color = find_max(new_r, new_g, new_b);
       // Если тусклый цвет, то вычитаем белый компонент, затем увеличиваем яркость с большим коэфф.
       if (brightest_color < 80 and brightest_color > 30) { // Другими словами увеличиваем насыщенность цвета
-        new_r = max(new_r - 10, 0); 
-        new_g = max(new_g - 10, 0);
-        new_b = max(new_b - 10, 0);
-        color_ratio = (255 - brightest_color - 10) / 255 * 2.0; // Коэф. также подстраивается
+        new_r = max(new_r - 7, 0); 
+        new_g = max(new_g - 7, 0);
+        new_b = max(new_b - 7, 0);
+        color_ratio = (255 - brightest_color - 10) / 255 * 1.35; // Коэф. также подстраивается
       }
-      else {
+      else if (brightest_color > 30) {
         new_r = max(new_r - 15, 0); 
         new_g = max(new_g - 15, 0);
         new_b = max(new_b - 15, 0);
