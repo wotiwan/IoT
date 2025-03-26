@@ -76,14 +76,14 @@ void loop() {
     }
 
     star_set = false;
+
+    if (mode == 1) { // Адаптивная эмбиент подсветка
+      ambilight();
+    }
   }
 
   if (mode == 0) { // может вызвать проблемы | выключение подсветки
     off_the_lights();
-  }
-
-  if (mode == 1) { // Адаптивная эмбиент подсветка
-    ambilight();
   }
 
   if (mode == 2) { // Режим статичного цвета
@@ -121,8 +121,6 @@ void static_lights() {
 }
 
 void ambilight() {
-
-  Serial.println("start");
 
   // ждём пока придёт 684 байта 
   while(Serial.available() < 684) { // Exception(4) + soft reload если данные долго не приходят
