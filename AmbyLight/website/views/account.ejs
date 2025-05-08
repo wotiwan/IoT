@@ -1,0 +1,22 @@
+<h2>Привет, <%= username %>!</h2>
+<p>Email: <%= email %></p>
+
+<h3>Мои светодиодные ленты:</h3>
+<ul>
+    <% strips.forEach(strip => { %>
+        <li>
+            Лента <%= strip.code %> - режим: <%= strip.mode %>, 
+            статус: <%= strip.is_on == 1 ? 'Включена' : 'Выключена' %>
+            <div><a href="/led-control/<%= strip.code %>" class="link-button">Настроить</a>
+
+            <% if (strip.admin_user_id == user.id) { %> <!-- Проверяем, является ли текущий пользователь администратором ленты -->
+                <a href="/admin-panel" class="link-button">Перейти в панель администратора</a>
+            <% } %></div>
+        </li>
+    <% }) %>
+</ul>
+
+<form action="/add-led-strip" method="POST">
+    <input type="text" name="code" placeholder="Код ленты" required>
+    <button type="submit">Добавить ленту</button>
+</form>

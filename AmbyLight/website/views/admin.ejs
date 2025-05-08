@@ -1,0 +1,21 @@
+<h2>Панель администратора</h2>
+
+<% strips.forEach(strip => { %>
+  <h3>Лента: <%= strip.code %></h3>
+  <ul>
+    <% usersSettings
+      .filter(s => s.code === strip.code && s.user_id !== strip.admin_user_id)
+      .forEach(user => { %>
+        <li>
+          Пользователь ID: <%= user.user_id %> —
+          Режим: <%= user.mode %>,
+          Цвет: <%= user.color %>,
+          <form action="/admin/reset-settings" method="POST" style="display:inline">
+            <input type="hidden" name="code" value="<%= user.code %>">
+            <input type="hidden" name="user_id" value="<%= user.user_id %>">
+            <button type="submit">Сбросить</button>
+          </form>
+        </li>
+    <% }) %>
+  </ul>
+<% }) %>

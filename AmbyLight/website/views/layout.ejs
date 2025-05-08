@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title || "Сайт управления лентой" %></title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+    <header>
+        <h1 style="font-size: 2em; margin: 0;">
+            <a href="/account" style="font-size: 1em; text-decoration: none; color: inherit;">
+                Сайт управления лентой
+            </a>
+        </h1>
+        <% if (username) { %>
+            <a href="/account">Аккаунт (<%= username %>)</a>
+            <a href="/logout">Выход</a>
+        <% } else { %>
+            <a href="/">Вход</a>
+            <a href="/register">Регистрация</a>
+        <% } %>
+        <a href="/download">Скачать ПО</a>
+        
+
+    </header>
+    
+
+    <main>
+        <%- body %>
+    </main>
+
+</body>
+</html>

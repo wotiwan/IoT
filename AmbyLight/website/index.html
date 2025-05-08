@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Контроль Ленты</title>
+    <script defer src="app.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #colorPicker { width: 100px; height: 100px; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Вход</h2>
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Пароль">
+    <button onclick="login()">Войти</button>
+    <hr>
+
+    <h2>Привязка ленты</h2>
+    <input id="ledCode" type="text" placeholder="Код ленты">
+    <button onclick="addLed()">Привязать</button>
+    <hr>
+
+    <h2>Настройки ленты</h2>
+    <button onclick="setMode('auto')">Автоматический</button>
+    <button onclick="setMode('manual')">Ручной</button>
+    <br><br>
+    <input id="colorPicker" type="color" onchange="setColor(this.value)">
+</body>
+</html>
