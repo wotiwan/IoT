@@ -75,7 +75,7 @@ void loop() {
       global_hsv = 0; // потом поломается это, надо по хорошему разные переменные хсв для градиента и радуги
     }
     star_set = false;
-
+    
     if (mode == 1) { // Адаптивная эмбиент подсветка
       ambilight();
     }
@@ -144,10 +144,10 @@ void ambilight() {
       int brightest_color = find_max(new_r, new_g, new_b);
       // Если тусклый цвет, то вычитаем белый компонент, затем увеличиваем яркость с большим коэфф.
       if (brightest_color < 80 and brightest_color > 30) { // Другими словами увеличиваем насыщенность цвета
-        new_r = max(new_r - 7, 0); 
-        new_g = max(new_g - 7, 0);
-        new_b = max(new_b - 7, 0);
-        color_ratio = (255 - brightest_color - 10) / 255 * 1.35; // Коэф. также подстраивается
+        new_r = max(new_r - 7, 0); // 14 
+        new_g = max(new_g - 7, 0); // 24
+        new_b = max(new_b - 7, 0); // 4
+        color_ratio = (255 - brightest_color - 10) / 255 * 1.35; // 1.65 // Коэф. также подстраивается
       }
       else if (brightest_color > 30) {
         new_r = max(new_r - 15, 0); 
@@ -156,9 +156,9 @@ void ambilight() {
         color_ratio = (255 - brightest_color) / 255; // Увеличение яркости тусклых пикселей
       }
 
-      new_r = new_r * (color_ratio + 1) * red_ratio;
-      new_g = new_g * (color_ratio + 1) * green_ratio;
-      new_b = new_b * (color_ratio + 1) * blue_ratio;
+      new_r = new_r * (color_ratio + 1) * red_ratio; // 37
+      new_g = new_g * (color_ratio + 1) * green_ratio; // 64
+      new_b = new_b * (color_ratio + 1) * blue_ratio; // 11
     }
 
     // Устраняем мерцание сглаживанием
