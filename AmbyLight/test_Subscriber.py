@@ -2,7 +2,7 @@ import struct
 import paho.mqtt.client as mqtt
 # является тестовым подписчиком для проверки работоспособности, в будущем может быть удалён
 
-BROKER = "localhost"
+BROKER = "176.117.252.148"
 MQTT_PORT = 1884
 TOPIC = "led/data"
 
