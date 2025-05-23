@@ -4,10 +4,10 @@ import time
 import struct
 import serial
 
-ser = serial.Serial('COM7', 1000000)
+ser = serial.Serial('COM3', 2000000)
 time.sleep(2)
 
-# Аппаратное ускорение для увеличения быстродействия
+# Аппаратное ускорения для увеличения быстродействия
 cv2.setUseOptimized(True)
 cv2.setNumThreads(8)
 cv2.ocl.setUseOpenCL(True)
@@ -63,7 +63,7 @@ def get_confirm(message: str):
     while True:
         if ser.in_waiting > 0:
             data = ser.readline().decode("utf-8", errors="replace").strip()
-            # print(f"{data}")
+            print(f"{data}")
             if data == message:
                 return True
             # No need now
@@ -74,7 +74,7 @@ def get_confirm(message: str):
 def send_array(col_arr):
     data_bytes = struct.pack(f'{1}B', 1) # Отправляем текущий режим
     ser.write(data_bytes)
-    get_confirm("start")
+    # get_confirm("start") # не имеет смысла
 
     data_bytes = struct.pack(f'{684}B', *col_arr)
     ser.write(data_bytes)
@@ -82,7 +82,7 @@ def send_array(col_arr):
 
 
 camera = dxcam.create(output_color="RGB", output_idx=0)  # BGR вместо BGRA +63%
-camera.start(target_fps=40)
+camera.start(target_fps=30)
 
 fps_gen = fps_counter()
 
