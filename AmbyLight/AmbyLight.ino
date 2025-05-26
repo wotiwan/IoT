@@ -1,7 +1,11 @@
 #include <WiFiManager.h>
+#include <AsyncUDP.h>
+#include <FastLED.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
-#include <FastLED.h>
+
+#define LED_PIN 22
+#define LED_COUNT 228
 
 // MQTT Setup
 const char* mqtt_server = "176.215.235.238"; // 176.215.235.238 or 192.168.43.133
@@ -9,20 +13,17 @@ const int mqtt_port = 1884;
 const char* mqtt_topic = "led/data";
 WiFiClient espClient;
 PubSubClient client(espClient);
+byte savedPayload[128]; // 128 byte max, can change if there is a need
+unsigned int savedPayloadLength = 0;
 
-// FastLED Setup
-#define LED_PIN 22
-#define LED_COUNT 228
-CRGB leds[LED_COUNT]; // Объявление массива светодиодов
-
-// Local settings setup
+// FastLED setup
+CRGB leds[LED_COUNT];
 int mode = 3; // Изначальный режим не должен ждать никаких значений.
 // Color calibration
 // TODO: input by user
 float red_ratio = 1.05;
 float green_ratio = 0.98;
 float blue_ratio = 0.96;
-
 float smooth_ratio = 0.3; // Переменная для сглаживания картинки ambient режима
 int saturation = 255; // Насыщенность HSV цвета, задаётся пользователем ?? Если колорпикер будет хсвшным, что вряд ли
 int brightness = 85; // Яркость, задаётся пользователем, по умолчанию (!максимальная)
@@ -37,13 +38,6 @@ bool star_set = false;
 
 int star_position = 73; // стартовая позиция
 
-// MQTT vars
-byte savedPayload[1024];
-unsigned int savedPayloadLength = 0;
-
-unsigned long start_time = 0;
-unsigned long cur_time = 0;
-
 void off_the_lights();
 void ambilight();
 void static_lights();
@@ -53,83 +47,98 @@ void set_gradient();
 void gradient();
 void set_star();
 void star_shooting();
-
 void change_brightness();
 void change_rgb_color();
-
 void custom_delay();
-
 int find_max(int a, int b, int c);
 
-void callback_on_data(char* topic, byte* payload, unsigned int length);
-void mqtt_reconnect();
-void timer_start();
-void timer_end();
+bool leds_busy = false;
+
+int ambi_data[684];
+// Создаём объект UDP cоединения
+AsyncUDP udp;
+// Определяем порт
+const uint16_t port = 49152;
+void parsePacket(AsyncUDPPacket packet)
+{
+  // Записываем адрес начала данных в памяти
+  const uint8_t* msg = packet.data();
+  // Записываем размер данных
+  const size_t len = packet.length();
+
+  // Если адрес данных не равен нулю и размер данных больше нуля...
+  if (msg != NULL && len > 0) { // Захардкожено, переделать
+    // Запускаем выполнение только если ранее был установлен mode == 1
+    if (mode == 1) {
+      for (int i = 0; i < len; i++) {
+        ambi_data[i] = msg[i]; // msg[i] норм
+      }
+      // Для блокировки обработки смены режима посредством mqtt
+      leds_busy = true;
+      ambilight();
+      leds_busy = false;
+      packet.printf("OK_ambi");
+    }
+  }
+}
 
 void setup() {
-  Serial.setRxBufferSize(1024);
-  Serial.begin(2000000);
+  // Serial.setRxBufferSize(1024);
+  Serial.begin(115200);
   setCpuFrequencyMhz(240);
   pinMode(LED_PIN, OUTPUT);
+  FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, LED_COUNT);
 
-  // MQTT Setup
-  WiFiManager wifiManager; 
-  wifiManager.autoConnect();
+  // Подключение через WiFiManager
+  WiFiManager wm;
+  wm.autoConnect("ESP32_AmbiLight");
+  Serial.print("Connected. IP address: ");
+  Serial.println(WiFi.localIP());
+
+  // Mqtt Setup
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback_on_data);
   mqtt_reconnect();
 
-  //FastLED Setup
-  FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, LED_COUNT);
+  // UDP Setup
+  if(udp.listen(port)) {
+    // При получении пакета вызываем callback функцию
+    udp.onPacket(parsePacket);
+  }
 }
 
 void loop() {
-
-  if (mode == 0) { 
-    off_the_lights();
-  }
-  if (mode == 2) { // Режим статичного цвета
-    static_lights();
-  }
-  if (mode == 3) {
-    rainbow();
-  }
-  if (mode == 4) {
-    gradient();
-  }
-  if (mode == 5) {
-    star_shooting();
-  }
-
   if (!client.connected()) {
     mqtt_reconnect();
   }
   client.loop();
-}
-
-void off_the_lights() {
-  for (int i = 0; i < LED_COUNT; i++) {
-    leds[i] = 0;
+  if (mode == 0) { // может вызвать проблемы | выключение подсветки
+    off_the_lights();
   }
-  FastLED.show();
-  Serial.println("OK_off");
-}
 
-void static_lights() {
-  for (int i = 0; i < LED_COUNT; i++) {
-    leds[i].r = global_rgb[0]; // Копируем полученный цвет во все диоды
-    leds[i].g = global_rgb[1];
-    leds[i].b = global_rgb[2];
+  if (mode == 2) { // Режим статичного цвета
+    static_lights();
   }
-  FastLED.show();
+
+  if (mode == 3) {
+    rainbow();
+  }
+
+  if (mode == 4) {
+    gradient();
+  }
+
+  if (mode == 5) {
+    star_shooting();
+  }
 }
 
 void ambilight() {
   int led_index = 0;
-  for (int i = 1; i < savedPayloadLength; i+=3, led_index++) { 
-    int new_r = savedPayload[i];
-    int new_g = savedPayload[i+1];
-    int new_b = savedPayload[i+2];
+  for (int i = 0; i < 684; i+= 3, led_index++) { // Захардкожено, переделать 
+    int new_r = ambi_data[i];
+    int new_g = ambi_data[i+1];
+    int new_b = ambi_data[i+2];
 
     if (new_r <= 20 && new_g <= 20 && new_b <= 20) { // Небольшой трешхолд для тусклых серых цветов
       new_r = 0;
@@ -167,13 +176,28 @@ void ambilight() {
 
   }
 
-  // Serial.println("Time for garbage per cycle (ms):");
-  while(Serial.available()) { 
-    Serial.read();
-  }
-
+  // while(Serial.available()) { 
+  //   Serial.read();
+  // }
   FastLED.show();
-  Serial.println("OK_ambi");
+  Serial.println("OK_ambi_serial");
+}
+
+void off_the_lights() {
+  for (int i = 0; i < LED_COUNT; i++) {
+    leds[i] = 0;
+  }
+  FastLED.show();
+  Serial.println("OK_off");
+}
+
+void static_lights() {
+  for (int i = 0; i < LED_COUNT; i++) {
+    leds[i].r = global_rgb[0]; // Копируем полученный цвет во все диоды
+    leds[i].g = global_rgb[1];
+    leds[i].b = global_rgb[2];
+  }
+  FastLED.show();
 }
 
 void set_rainbow() {
@@ -290,10 +314,7 @@ void custom_delay() {
 }
 
 void change_brightness() {
-  while (Serial.available() < 1) {
-    // Ожидаем пакет
-  }
-  brightness = Serial.read();
+  brightness = savedPayload[0];
   while(Serial.available()) {
     Serial.read();
   }
@@ -301,18 +322,12 @@ void change_brightness() {
 }
 
 void change_rgb_color() {
-  Serial.println("start_rgb");
-  while (Serial.available() < 3) {
-    delay(1); // Ожидаем пакет // Сменить на кастом
-  }
-  global_rgb[0] = Serial.read();
-  global_rgb[1] = Serial.read();
-  global_rgb[2] = Serial.read();
-  while(Serial.available()) {
-    Serial.read();
-  }
+  global_rgb[0] = savedPayload[0];
+  global_rgb[1] = savedPayload[1];
+  global_rgb[2] = savedPayload[2];
   Serial.println("OK_rgb");
 }
+
 
 int find_max(int a, int b, int c) {
   if (a > b && a > c) {
@@ -327,11 +342,9 @@ int find_max(int a, int b, int c) {
 }
 
 void callback_on_data(char* topic, byte* payload, unsigned int length) {
-  // Serial.println("Time taken for callback wait (ms): ");
-  timer_end();
-  // Обработка
+  // добавить блокировку обработки через leds_busy
+  Serial.println("Что то пришло");
   int new_mode = payload[0];
-
   memcpy(savedPayload, payload, length);  // копируем байты
   savedPayloadLength = length;
   
@@ -345,7 +358,6 @@ void callback_on_data(char* topic, byte* payload, unsigned int length) {
   else {
     mode = new_mode;
   }
-  // Serial.println(mode);
   if (mode != 3) {
     rainbow_set = false;
     global_hsv = 0;
@@ -355,11 +367,7 @@ void callback_on_data(char* topic, byte* payload, unsigned int length) {
     global_hsv = 0; // потом поломается это, надо по хорошему разные переменные хсв для градиента и радуги
   }
   star_set = false;
-  
-  if (mode == 1) { // Адаптивная эмбиент подсветка
-    ambilight();
-  }
-  timer_start();
+
 }
 
 void mqtt_reconnect() {
@@ -376,13 +384,4 @@ void mqtt_reconnect() {
       delay(5000);
     }
   }
-}
-
-void timer_start() {
-  start_time = millis();
-}
-
-void timer_end() {
-  cur_time = millis();
-  // Serial.println(cur_time - start_time);
 }
