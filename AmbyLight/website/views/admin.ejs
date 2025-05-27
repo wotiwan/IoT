@@ -1,21 +1,41 @@
-<h2>Панель администратора</h2>
+<div class="container admin-panel main-content">
+  <h2 class="card-title mb-20">Панель администратора</h2>
 
-<% strips.forEach(strip => { %>
-  <h3>Лента: <%= strip.code %></h3>
-  <ul>
-    <% usersSettings
-      .filter(s => s.code === strip.code && s.user_id !== strip.admin_user_id)
-      .forEach(user => { %>
-        <li>
-          Пользователь ID: <%= user.user_id %> —
-          Режим: <%= user.mode %>,
-          Цвет: <%= user.color %>,
-          <form action="/admin/reset-settings" method="POST" style="display:inline">
-            <input type="hidden" name="code" value="<%= user.code %>">
-            <input type="hidden" name="user_id" value="<%= user.user_id %>">
-            <button type="submit">Сбросить</button>
-          </form>
-        </li>
-    <% }) %>
-  </ul>
-<% }) %>
+  <% strips.forEach(strip => { %>
+    <div class="card fade-in">
+      <div class="card-header">
+        <h3 class="led-strip-title">Лента: <%= strip.code %></h3>
+      </div>
+
+      <% const filteredUsers = usersSettings.filter(s => s.code === strip.code && s.user_id !== strip.admin_user_id); %>
+
+      <% if (filteredUsers.length > 0) { %>
+        <ul class="list">
+          <% filteredUsers.forEach(user => { %>
+            <li class="list-item">
+              <div>
+                <div class="user-setting">Пользователь ID: <%= user.user_id %></div>
+                <div class="user-settings">
+                  <div class="user-setting">Режим: <%= user.mode %></div>
+                  <div class="user-setting">Цвет: <span style="color:<%= user.color %>"><%= user.color %></span></div>
+                </div>
+              </div>
+
+              <form action="/admin/reset-settings" method="POST">
+                <input type="hidden" name="code" value="<%= user.code %>">
+                <input type="hidden" name="user_id" value="<%= user.user_id %>">
+                <button type="submit" class="btn btn-outline btn-sm">Сбросить</button>
+              </form>
+            </li>
+          <% }) %>
+        </ul>
+      <% } else { %>
+        <p class="text-center gray-color">Нет других пользователей для этой ленты.</p>
+      <% } %>
+    </div>
+  <% }) %>
+
+  <div class="mb-20">
+    <a href="/account" class="btn btn-outline btn-sm">← Вернуться на главную</a>
+  </div>
+</div>

@@ -1,22 +1,41 @@
-<h2>Привет, <%= username %>!</h2>
-<p>Email: <%= email %></p>
+<div class="container main-content">
+  <div class="card fade-in">
+    <h2 class="card-title">Привет, <%= username %>!</h2>
+    <p>Email: <%= email %></p>
+  </div>
 
-<h3>Мои светодиодные ленты:</h3>
-<ul>
-    <% strips.forEach(strip => { %>
-        <li>
-            Лента <%= strip.code %> - режим: <%= strip.mode %>, 
-            статус: <%= strip.is_on == 1 ? 'Включена' : 'Выключена' %>
-            <div><a href="/led-control/<%= strip.code %>" class="link-button">Настроить</a>
+  <div class="card fade-in">
+    <h3 class="card-title">Мои светодиодные ленты</h3>
+    <% if (strips.length > 0) { %>
+      <ul class="list">
+        <% strips.forEach(strip => { %>
+          <li class="list-item card fade-in scale-hover">
+            <div>
+              <strong>Лента <%= strip.code %></strong><br>
+              Режим: <%= strip.mode %>, Статус: <%= strip.is_on == 1 ? 'Включена' : 'Выключена' %>
+              <div class="user-settings mt-10">
+                <a href="/led-control/<%= strip.code %>" class="btn btn-outline btn-sm">Настроить</a>
+                <% if (strip.admin_user_id == user.id) { %>
+                  <a href="/admin-panel" class="btn btn-outline btn-sm">Панель администратора</a>
+                <% } %>
+              </div>
+            </div>
+          </li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <p class="gray-color">У вас пока нет добавленных лент.</p>
+    <% } %>
+  </div>
 
-            <% if (strip.admin_user_id == user.id) { %> <!-- Проверяем, является ли текущий пользователь администратором ленты -->
-                <a href="/admin-panel" class="link-button">Перейти в панель администратора</a>
-            <% } %></div>
-        </li>
-    <% }) %>
-</ul>
-
-<form action="/add-led-strip" method="POST">
-    <input type="text" name="code" placeholder="Код ленты" required>
-    <button type="submit">Добавить ленту</button>
-</form>
+  <div class="card fade-in">
+    <h3 class="card-title">Добавить ленту</h3>
+    <form action="/add-led-strip" method="POST">
+      <div class="form-group">
+        <label for="code" class="form-label">Код ленты</label>
+        <input type="text" name="code" id="code" class="form-control" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Добавить ленту</button>
+    </form>
+  </div>
+</div>

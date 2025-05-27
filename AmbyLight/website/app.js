@@ -26,7 +26,7 @@ function addLed() {
     fetch("http://localhost:3001/add-led-strip", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: 1, code: ledCode }) // ID пользователя должен передаваться из токена
+        body: JSON.stringify({ userId: 1, code: ledCode })
     })
     .then(res => res.json())
     .then(data => alert(data.success ? "Лента добавлена!" : "Ошибка!"));
