@@ -232,7 +232,25 @@ app.post("/update-led-strip", (req, res) => {
   );
 });
 
+// **Обновляем только указанный параметр**
+app.post("/update-led-parameter", (req, res) => {
+  if (!req.session.userId) return res.status(401).send("Неавторизован");
 
+  const { code, parameter, value } = req.body;
+
+  const allowedParams = ["brightness", "speed"];
+  if (!allowedParams.includes(parameter)) {
+    return res.status(400).send("Неверный параметр");
+  }
+
+  
+  const sql = `UPDATE led_strips SET ${parameter} = ? WHERE user_id = ? AND code = ?`;
+  db.run(sql, [value, req.session.userId, code], function(err) {
+    if (err) return res.status(500).send("Ошибка обновления");
+
+    res.send({ success: true, parameter, value });
+  });
+});
 
 
 

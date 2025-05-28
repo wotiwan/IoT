@@ -36,8 +36,10 @@
             Яркость: <span id="brightness-val"><%= strip.brightness %></span>
             <button type="button" class="btn btn-secondary btn-sm" onclick="toggleSlider('brightness')">Изменить</button>
           </label>
-          <div id="brightness-container" style="display: none;">
-            <input type="range" id="brightness" name="brightness" min="0" max="100" step="1" value="<%= strip.brightness %>" class="form-control">
+          <div id="brightness-container" style="display: none; margin-top: 8px; margin-bottom: 16px;">
+            <input type="range" id="brightness" name="brightness" min="0" max="100" step="1" value="<%= strip.brightness %>" class="form-control" style="width: 70%; display: inline-block;">
+            <div>
+            <button type="button" class="btn btn-success btn-primary btn-sm" onclick="saveSingleSetting('brightness')">Сохранить</button></div>
           </div>
         </div>
 
@@ -46,14 +48,18 @@
             Скорость: <span id="speed-val"><%= strip.speed %></span>
             <button type="button" class="btn btn-secondary btn-sm" onclick="toggleSlider('speed')">Изменить</button>
           </label>
-          <div id="speed-container" style="display: none;">
-            <input type="range" id="speed" name="speed" min="1" max="10" step="1" value="<%= strip.speed %>" class="form-control">
+          <div id="speed-container" style="display: none; margin-top: 8px; margin-bottom: 16px;">
+            <input type="range" id="speed" name="speed" min="1" max="10" step="1" value="<%= strip.speed %>" class="form-control" style="width: 70%; display: inline-block;">
+            <div>
+            <button type="button" class="btn btn-success btn-primary btn-sm" onclick="saveSingleSetting('speed')">Сохранить</button></div>
           </div>
         </div>
 
       </div>
 
       <button type="submit" class="btn btn-primary mt-20">Сохранить</button>
+      <a href="/account" class="btn btn-outline btn-sm">← Вернуться на главную</a>
+
     </form>
   </div>
 </div>
@@ -81,6 +87,47 @@
     const container = document.getElementById(`${type}-container`);
     container.style.display = (container.style.display === "none") ? "block" : "none";
   }
+
+  function saveSingleSetting(type) {
+    const code = document.querySelector("input[name='code']").value;
+    let value;
+
+    if (type === "brightness") {
+      value = Math.round(document.getElementById("brightness").value);
+    } else if (type === "speed") {
+      value = parseInt(document.getElementById("speed").value);
+    } else {
+      console.error("Неизвестный параметр для сохранения");
+      return;
+    }
+
+    fetch("/update-led-parameter", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code, parameter: type, value }),
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        if (type === "brightness") {
+          document.getElementById("brightness-val").textContent = Math.round(value);
+        } else if (type === "speed") {
+          document.getElementById("speed-val").textContent = value;
+        }
+
+        document.getElementById(`${type}-container`).style.display = "none";
+        console.log(`Параметр ${type} обновлен успешно`);
+      } else {
+        alert("Ошибка при сохранении параметра");
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Ошибка при сохранении параметра");
+    });
+  }
+
+
 
   function updateSliderLabel(id, labelId, suffix = '') {
     const input = document.getElementById(id);
