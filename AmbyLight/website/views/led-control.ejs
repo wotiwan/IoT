@@ -21,7 +21,6 @@
       </div>
 
       <div id="controls" style="<%= strip.is_on == 1 ? '' : 'display:none;' %>">
-        <!-- Mode -->
         <div class="form-group">
           <label for="mode" class="form-label">Режим</label>
           <select name="mode" id="mode" class="form-control" onchange="toggleColorPicker()">
@@ -34,7 +33,6 @@
           </select>
         </div>
 
-        <!-- Color Picker -->
         <div class="form-group" id="color-picker" style="<%= strip.mode === 'manual' ? '' : 'display:none;' %>">
           <label for="color" class="form-label">Цвет</label>
           <input type="color" id="color" name="color" value="<%= strip.color %>">
@@ -49,8 +47,6 @@
           </select>
         </div>
 
-
-        <!-- Brightness -->
         <div class="form-group">
           <label class="form-label">
             Яркость: <span id="brightness-val"><%= strip.brightness %></span>
@@ -62,7 +58,6 @@
           </div>
         </div>
 
-        <!-- Speed -->
         <div class="form-group">
           <label class="form-label">
             Скорость: <span id="speed-val"><%= strip.speed %></span>
@@ -74,7 +69,6 @@
           </div>
         </div>
 
-        <!-- Width -->
         <div class="form-group">
           <label class="form-label">
             Ширина (кол-во светодиодов): <span id="width-val"><%= strip.width %></span>
@@ -83,7 +77,6 @@
           <button type="button" class="btn btn-success btn-sm" onclick="saveWidth()">Сохранить ширину</button>
         </div>
 
-        <!-- Height -->
         <div class="form-group">
           <label class="form-label">
             Высота (кол-во светодиодов): <span id="height-val"><%= strip.height %></span>
@@ -163,7 +156,6 @@ function saveWidth() {
       return;
     }
 
-    // 1) Сначала обновляем БД на Express-сервере
     fetch("/update-led-parameter", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -175,9 +167,7 @@ function saveWidth() {
         alert("Ошибка при сохранении ширины в базе");
         throw new Error("DB error");
       }
-      // отражаем в UI
       document.getElementById("width-val").textContent = width;
-      // 2) и только потом — обновляем config.json на FastAPI
       const mac = encodeURIComponent(code);
       return fetch(`http://176.117.244.160:8000/update_cnfg/${mac}/width/${width}`, {
         method: "GET",
@@ -189,7 +179,6 @@ function saveWidth() {
     })
     .catch(err => {
       console.error(err);
-      // уже с DB и config.json мы обработали ошибки локально
     });
   }
 
@@ -254,7 +243,6 @@ function saveWidth() {
       console.error(err);
     });
   }
-
 
 
   async function sendModeRequest() {
