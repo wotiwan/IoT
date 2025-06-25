@@ -38,4 +38,16 @@
       <button type="submit" class="btn btn-primary">Добавить ленту</button>
     </form>
   </div>
+
+  <div class="card fade-in">
+    <h3 class="card-title">Мои настройки</h3>
+    <form action="/update-user-dimensions" method="POST">
+      <label>Ширина:</label>
+      <input type="number" name="width" value="<%= user.width %>" required>
+      <label>Высота:</label>
+      <input type="number" name="height" value="<%= user.height %>" required>
+      <button type="submit" class="btn btn-outline btn-sm">Сохранить</button>
+    </form>
+  </div>
+
 </div>

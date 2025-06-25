@@ -18,10 +18,10 @@
         <a href="/download">Скачать ПО</a>
         <% if (username) { %>
             <a href="/account">Аккаунт (<%= username %>)</a>
+            <a id="logout" href="/logout" class="btn btn-outline btn-sm">Выйти</a>
         <% } else { %>
             <a href="/register">Регистрация</a>
             <a href="/">Вход</a>
-            <a href="/logout">Выход</a>
         <% } %>
         
         <button id="theme-toggle" class="btn btn-outline btn-sm">🌓 Тема</button>

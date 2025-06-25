@@ -71,7 +71,7 @@ header {
   padding: 20px;
   box-shadow: var(--shadow);
   display: flex;
-  justify-content: space-between;
+  justify-content: space-evenly;            
   align-items: center;
   position: sticky;
   top: 0;
@@ -207,7 +207,7 @@ button,
 .download-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+  gap: 40px;
   margin-top: 30px;
 }
 
@@ -311,6 +311,44 @@ footer {
   to { opacity: 1; transform: translateY(0); }
 }
 
+
+
+
+
+
+/* Анимация */
+.fade-in {
+  opacity: 0;
+  animation: fadeIn 0.6s ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.scale-hover {
+  transition: transform 0.3s ease;
+}
+
+.scale-hover:hover {
+  transform: scale(1.03);
+}
+
+
+
+
+/* Добавляем отступ под шапкой */
+.main-content {
+  padding: 40px 20px 40px; /* ↑ top, → sides, ↓ bottom */
+}
+
 @media (max-width: 768px) {
   header {
     flex-direction: column;
@@ -338,7 +376,14 @@ footer {
 
   #theme-toggle {
     align-self: stretch;
-    width: 70%;
+    width: 90%;
+    font-size: 0.9rem !important;
+    padding: 8px 0;
+  }
+
+  #logout {
+    align-self: stretch;
+    width: 90%;
     font-size: 0.9rem !important;
     padding: 8px 0;
   }
@@ -358,29 +403,101 @@ footer {
     padding: 8px 12px !important;
   }
 
-}
-
-/* Анимация */
-.fade-in {
-  opacity: 0;
-  animation: fadeIn 0.6s ease forwards;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
+  .main-content {
+    padding: 30px 16px 30px;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+}
+
+
+
+/* МОБИЛЬНАЯ ВЕРСИЯ */
+
+@media (max-width: 319px) {
+  
+
+  html {
+    font-size: 14px; /* немного уменьшенный базовый размер шрифта */
   }
-}
 
-.scale-hover {
-  transition: transform 0.3s ease;
-}
 
-.scale-hover:hover {
-  transform: scale(1.03);
+  .container {
+    padding: 10px !important;
+  }
+
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px 12px !important;
+  }
+
+  header h1 {
+    font-size: 1.2rem !important;
+  }
+
+  header a {
+    font-size: 0.85rem !important;
+    padding: 4px 0;
+  }
+
+  
+
+  .card,
+  .list-item {
+    padding: 12px !important;
+    margin-bottom: 20px;
+  }
+
+  .card-title {
+    font-size: 1.2rem !important;
+  }
+
+  .download-title {
+    font-size: 1rem;
+  }
+
+  .download-description {
+    font-size: 0.85rem;
+  }
+
+  .user-setting {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+  }
+
+  .btn,
+  button {
+    font-size: 0.85rem !important;
+    padding: 6px 10px !important;
+  }
+
+  form {
+    padding: 0 4px;
+  }
+
+  input,
+  select {
+    font-size: 0.9rem;
+    padding: 10px;
+    margin-bottom: 16px;
+  }
+
+  input[type="color"] {
+    width: 40px;
+    height: 40px;
+  }
+
+  .download-list {
+    grid-template-columns: 1fr !important;
+    gap: 20px;
+  }
+
+  footer {
+    font-size: 0.8rem;
+    padding: 12px;
+  }
+
+  .main-content {
+    padding: 20px 16px 16px !important;
+  }
 }

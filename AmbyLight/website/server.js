@@ -22,7 +22,7 @@ app.set("layout", "layout");
 
 // **Создание таблиц**
 db.serialize(() => {
-  db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, email TEXT UNIQUE, password TEXT)");
+  db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, email TEXT UNIQUE, password TEXT, width INTEGER, height INTEGER)");
 
   db.run(`CREATE TABLE IF NOT EXISTS led_strips (
     id INTEGER PRIMARY KEY,
@@ -64,22 +64,28 @@ app.get("/register", (req, res) => {
   res.render("register", { title: "Регистрация" });
 });
 
+
 // **Страница аккаунта**
 app.get("/account", (req, res) => {
   if (!req.session.userId) return res.redirect("/");
-  
-  db.all("SELECT * FROM led_strips WHERE user_id = ?", [req.session.userId], (err, strips) => {
+
+  db.get("SELECT * FROM users WHERE id = ?", [req.session.userId], (err, userData) => {
+    if (err) return res.status(500).send("Ошибка при получении данных пользователя");
+
+    db.all("SELECT * FROM led_strips WHERE user_id = ?", [req.session.userId], (err, strips) => {
       if (err) return res.status(500).send("Ошибка при получении лент");
 
-      res.render("account", { 
-          title: "Мой Аккаунт", 
-          username: req.session.username, 
-          email: req.session.email, 
-          strips, 
-          user: { id: req.session.userId }
+      res.render("account", {
+        title: "Мой Аккаунт",
+        username: userData.username,
+        email: userData.email,
+        strips,
+        user: userData  // Здесь уже есть width и height
       });
+    });
   });
 });
+
 
 // **Страница управления конкретной лентой**
 app.get("/led-control/:code", (req, res) => {
@@ -96,26 +102,27 @@ app.get("/led-control/:code", (req, res) => {
 
 // **Регистрация пользователя**
 app.post("/register", async (req, res) => {
-  const { email, password } = req.body;
+  const { username, email, password, width, height } = req.body;
 
-  // Проверяем, существует ли пользователь с таким email
   db.get("SELECT * FROM users WHERE email = ?", [email], async (err, existingUser) => {
-    if (err) {
-      return res.send("Ошибка базы данных");
-    }
-    if (existingUser) {
-      return res.send("Пользователь с такой почтой уже зарегистрирован");
-    }
+    if (err) return res.send("Ошибка базы данных");
+    if (existingUser) return res.send("Пользователь с такой почтой уже зарегистрирован");
 
-    // Хешируем пароль
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    db.run("INSERT INTO users (email, password) VALUES (?, ?)", [email, hashedPassword], function (err) {
-      if (err) {
-        return res.send("Ошибка при регистрации");
-      }
-      res.redirect("/login");
-    });
+    db.run("INSERT INTO users (username, email, password, width, height) VALUES (?, ?, ?, ?, ?)",
+      [username, email, hashedPassword, width, height],
+      function (err) {
+        if (err) {
+          console.error("Ошибка при регистрации:", err.message);
+          return res.send("Ошибка при регистрации: " + err.message);
+        }
+
+        req.session.userId = this.lastID;
+        req.session.username = username;
+        req.session.email = email;
+        res.redirect("/account");
+      });
   });
 });
 
@@ -202,6 +209,8 @@ app.post("/add-led-strip", (req, res) => {
          [req.session.userId, code], function (err) {
     if (err) return res.send("Ошибка при привязке");
 
+    req.session.stripCode = code;                                                                        // КОД ЛЕНТЫ
+
     db.get("SELECT * FROM led_strips WHERE code = ?", [code], (err, strip) => {
       if (!strip.admin_user_id) {
         db.run("UPDATE led_strips SET admin_user_id = ? WHERE code = ?", [req.session.userId, code]);
@@ -250,6 +259,20 @@ app.post("/update-led-parameter", (req, res) => {
 
     res.send({ success: true, parameter, value });
   });
+});
+
+// **Обработка обновления ширины/высоты**
+app.post("/update-user-dimensions", (req, res) => {
+  if (!req.session.userId) return res.redirect("/");
+
+  const { width, height } = req.body;
+
+  db.run("UPDATE users SET width = ?, height = ? WHERE id = ?",
+    [width, height, req.session.userId],
+    (err) => {
+      if (err) return res.status(500).send("Ошибка при обновлении");
+      res.redirect("/account");
+    });
 });
 
 
