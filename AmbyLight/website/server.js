@@ -20,9 +20,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set("layout", "layout"); 
 
 
-// **Создание таблиц**
 db.serialize(() => {
-  db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, email TEXT UNIQUE, password TEXT, width INTEGER, height INTEGER)");
+  db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, email TEXT UNIQUE, password TEXT)");
 
   db.run(`CREATE TABLE IF NOT EXISTS led_strips (
     id INTEGER PRIMARY KEY,
@@ -34,13 +33,15 @@ db.serialize(() => {
     is_on INTEGER DEFAULT 1,
     saturation INTEGER DEFAULT 255,
     brightness INTEGER DEFAULT 85,
-    speed INTEGER DEFAULT 10
-  )`);
+    speed INTEGER DEFAULT 10,
+    width INTEGER DEFAULT 60,
+    height INTEGER DEFAULT 60,
+    direction TEXT DEFAULT 'right'
+    )
+    `);
 });
 
 
-
-// **Главная страница (авторизация)**
 app.use((req, res, next) => {
   res.locals.user = req.session.userId ? { id: req.session.userId, login: req.session.username, email: req.session.email } : null;
   next();
@@ -58,14 +59,11 @@ app.use((req, res, next) => {
   next();
 });
 
-
-// **Страница регистрации**
 app.get("/register", (req, res) => {
   res.render("register", { title: "Регистрация" });
 });
 
 
-// **Страница аккаунта**
 app.get("/account", (req, res) => {
   if (!req.session.userId) return res.redirect("/");
 
@@ -80,14 +78,14 @@ app.get("/account", (req, res) => {
         username: userData.username,
         email: userData.email,
         strips,
-        user: userData  // Здесь уже есть width и height
+        user: userData
       });
     });
   });
 });
 
 
-// **Страница управления конкретной лентой**
+
 app.get("/led-control/:code", (req, res) => {
   if (!req.session.userId) return res.redirect("/");
 
@@ -100,9 +98,8 @@ app.get("/led-control/:code", (req, res) => {
   });
 });
 
-// **Регистрация пользователя**
 app.post("/register", async (req, res) => {
-  const { username, email, password, width, height } = req.body;
+  const { username, email, password} = req.body;
 
   db.get("SELECT * FROM users WHERE email = ?", [email], async (err, existingUser) => {
     if (err) return res.send("Ошибка базы данных");
@@ -110,8 +107,8 @@ app.post("/register", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    db.run("INSERT INTO users (username, email, password, width, height) VALUES (?, ?, ?, ?, ?)",
-      [username, email, hashedPassword, width, height],
+    db.run("INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+      [username, email, hashedPassword],
       function (err) {
         if (err) {
           console.error("Ошибка при регистрации:", err.message);
@@ -126,7 +123,7 @@ app.post("/register", async (req, res) => {
   });
 });
 
-// **Авторизация пользователя**
+
 app.get("/login", (req, res) => {
   res.render("login");
 });
@@ -144,26 +141,32 @@ app.post("/login", (req, res) => {
   });
 });
 
-// **Выход**
+
 app.get("/logout", (req, res) => {
   req.session.destroy(() => {
     res.redirect("/");
   });
 });
 
-// **Скачать ПО**
+
 app.get('/download', (req, res) => {
-  res.render('download', {
-    title: 'Скачать ПО',
-    username: req.user?.username || null
+  if (!req.session.userId) return res.redirect("/");
+
+  db.get("SELECT * FROM led_strips WHERE user_id = ?", [req.session.userId], (err, strip) => {
+    if (err || !strip) return res.render('download', { title: 'Скачать ПО', strip: { code: '' } });
+
+    res.render('download', {
+      title: 'Скачать ПО',
+      strip
+    });
   });
 });
 
-// **Страница админа**
+
 app.get('/admin-panel', (req, res) => {
   if (!req.session.userId) return res.redirect("/");
 
-  const userId = req.session.userId; // Используем session.userId
+  const userId = req.session.userId; 
 
   db.all(`SELECT * FROM led_strips WHERE admin_user_id = ?`, [userId], (err, adminStrips) => {
     if (err) return res.status(500).send("Ошибка получения лент");
@@ -182,11 +185,10 @@ app.get('/admin-panel', (req, res) => {
   });
 });
 
-// **Сброс настроек**
 app.post('/admin/reset-settings', (req, res) => {
   if (!req.session.userId) return res.redirect("/");
 
-  const { code, user_id } = req.body; // Извлекаем данные из формы
+  const { code, user_id } = req.body; 
 
   db.get(`SELECT * FROM led_strips WHERE code = ? AND admin_user_id = ?`, [code, req.session.userId], (err, adminStrip) => {
     if (!adminStrip) return res.status(403).send("Нет прав");
@@ -200,7 +202,6 @@ app.post('/admin/reset-settings', (req, res) => {
 
 
 
-// **Привязка ленты**
 app.post("/add-led-strip", (req, res) => {
   if (!req.session.userId) return res.redirect("/");
   const { code } = req.body;
@@ -209,7 +210,7 @@ app.post("/add-led-strip", (req, res) => {
          [req.session.userId, code], function (err) {
     if (err) return res.send("Ошибка при привязке");
 
-    req.session.stripCode = code;                                                                        // КОД ЛЕНТЫ
+    req.session.stripCode = code;                                                                   
 
     db.get("SELECT * FROM led_strips WHERE code = ?", [code], (err, strip) => {
       if (!strip.admin_user_id) {
@@ -221,33 +222,29 @@ app.post("/add-led-strip", (req, res) => {
   });
 });
 
-
-// **Изменение режима/цвета ленты**
 app.post("/update-led-strip", (req, res) => {
   if (!req.session.userId) return res.redirect("/");
 
-  const { code, is_on, mode, color, saturation, brightness, speed } = req.body;
+  const { code, is_on, mode, color, saturation, brightness, speed, direction } = req.body;
 
   db.run(
     `UPDATE led_strips 
-     SET is_on = ?, mode = ?, color = ?, saturation = ?, brightness = ?, speed = ? 
+     SET is_on = ?, mode = ?, color = ?, saturation = ?, brightness = ?, speed = ?, direction = ?
      WHERE user_id = ? AND code = ?`,
-    [is_on, mode, color || "#FFFFFF", saturation, brightness, speed, req.session.userId, code],
+    [is_on, mode, color || "#FFFFFF", saturation, brightness, speed, direction || 'right', req.session.userId, code],
     (err) => {
       if (err) return res.send("Ошибка при обновлении ленты");
-
       res.redirect(`/account`);
     }
   );
 });
 
-// **Обновляем только указанный параметр**
 app.post("/update-led-parameter", (req, res) => {
   if (!req.session.userId) return res.status(401).send("Неавторизован");
 
   const { code, parameter, value } = req.body;
 
-  const allowedParams = ["brightness", "speed"];
+  const allowedParams = ["brightness", "speed","height","width"];
   if (!allowedParams.includes(parameter)) {
     return res.status(400).send("Неверный параметр");
   }
@@ -261,21 +258,5 @@ app.post("/update-led-parameter", (req, res) => {
   });
 });
 
-// **Обработка обновления ширины/высоты**
-app.post("/update-user-dimensions", (req, res) => {
-  if (!req.session.userId) return res.redirect("/");
 
-  const { width, height } = req.body;
-
-  db.run("UPDATE users SET width = ?, height = ? WHERE id = ?",
-    [width, height, req.session.userId],
-    (err) => {
-      if (err) return res.status(500).send("Ошибка при обновлении");
-      res.redirect("/account");
-    });
-});
-
-
-
-// **Запуск сервера**
 app.listen(3001, () => console.log("Сервер запущен на порту 3001"));
