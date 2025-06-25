@@ -1,0 +1,18 @@
+{
+  "udp": {
+    "ip": "192.168.145.60",
+    "port": 49152,
+    "timeout_s": 5.0
+  },
+  "sides_depth": 150,
+  "led_counts": {
+    "top": 33,
+    "bottom": 33,
+    "left": 18,
+    "right": 18
+  },
+  "MAC" : "EC:64:C9:7B:78:30",
+  "direction":"right",
+  "bytes_per_frame": 348,
+  "Broker": "176.117.244.160"
+}
