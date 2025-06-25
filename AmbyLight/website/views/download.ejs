@@ -1,19 +1,14 @@
 <div class="container main-content">
   <h2 class="card-title">Скачать программное обеспечение</h2>
   <p>Здесь вы можете скачать необходимые файлы для работы с LED-лентой.</p>
+  <input type="hidden" name="code" value="<%= strip.code %>">
 
-  <div class="download-list  fade-in scale-hover">
-    <!-- <div class="download-item card fade-in scale-hover">
-      <div class="download-icon">📥</div>
-      <div class="download-title">Прошивка</div>
-      <div class="download-description">Скачайте прошивку для ESP/Arduino</div>
-      <a href="/downloads/firmware.bin" download class="btn btn-primary">Скачать</a>
-    </div> -->
+  <div class="download-list fade-in scale-hover">
     <div class="download-item card fade-in scale-hover">
       <div class="download-icon">💻</div>
       <div class="download-title">Приложение для ПК</div>
       <div class="download-description">Утилита для Windows</div>
-      <a href="/downloads/controller_app.exe" download class="btn btn-primary">Скачать</a>
+      <a href="#" class="btn btn-primary" id="download-btn">Скачать</a>
     </div>
     <div class="download-item card fade-in scale-hover">
       <div class="download-icon">📖</div>
@@ -22,8 +17,25 @@
       <a href="/downloads/setup_guide.pdf" download class="btn btn-primary">Скачать</a>
     </div>
   </div>
-
-  <div class="mb-20">
-    <a href="/account" class="btn btn-outline btn-sm">← Вернуться на главную</a>
-  </div>
 </div>
+
+<script>
+  function getCode() {
+    return document.querySelector("input[name='code']").value.trim();
+  }
+
+  document.getElementById("download-btn").addEventListener("click", function(event) {
+    event.preventDefault();
+
+    const mac = getCode();
+    const encoded = encodeURIComponent(mac);
+    const url = `http://176.117.244.160:8000/download_package_po/${encoded}`;
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `soft_package.zip`; 
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  });
+</script>
